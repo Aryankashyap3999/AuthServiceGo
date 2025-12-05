@@ -8,7 +8,7 @@ import (
 
 type UsersRepository interface { // faciliates dependancy injection interface for repository
 	GetById() (*models.User, error)
-	Create() (*models.User, error)
+	Create(username string, email string, hashedpassword string) (error)
 	GetAll() ([]*models.User, error)
 	DeleteById(id int64) error
 }
@@ -23,31 +23,31 @@ func NewUserRepository(_db *sql.DB) UsersRepository {
 	}
 }
 
-func (u *UserRepositoryImp) Create() (*models.User, error) {
+func (u *UserRepositoryImp) Create(username string, email string, hashedpassword string) (error) {
 	query := "INSERT INTO users (username, email, password) VALUES (?, ?, ?)"
 
-	result, err := u.db.Exec(query, "testuser", "test@test.com", "password123")
+	result, err := u.db.Exec(query, username, email, hashedpassword)
 
 	if err != nil {
 		fmt.Println("Error inserting user:", err)
-		return nil, err
+		return err
 	}
 
 	rowsAffected, rowErr := result.RowsAffected()
 
 	if rowErr != nil {
 		fmt.Println("Error fetching rows affected:", rowErr)
-		return nil, rowErr
+		return rowErr
 	}
 
 	if rowsAffected == 0 {
 		fmt.Println("No rows were affected, user not created")
-		return nil, nil
+		return nil
 	}
 
 	fmt.Println("User successfully created", rowsAffected)
 
-	return nil, nil
+	return nil
 }
 
 func (u *UserRepositoryImp) GetById()  (*models.User, error) {

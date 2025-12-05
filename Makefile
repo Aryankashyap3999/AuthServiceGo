@@ -33,3 +33,9 @@ migrate-force:
 
 migrate-help:
 	goose -h
+
+
+# Task 1: Write a service layer code, that can encrypt the user password before
+# passing to the repository layer.
+
+# Task 2: Write a service layer function that can create a new JWT token for a user.
