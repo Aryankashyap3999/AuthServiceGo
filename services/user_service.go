@@ -6,16 +6,16 @@ import (
 )
 
 type UserService interface {
-	CreateUser() error
+	GetUserById() error
 }
 
 type UserServiceImp struct {
 	userRepository db.UsersRepository
 }
 
-func (u *UserServiceImp) CreateUser() error {
-	fmt.Println("Creating user in service layer")
-	u.userRepository.Create()
+func (u *UserServiceImp) GetUserById() error {
+	fmt.Println("Fetching user in service layer")
+	u.userRepository.GetById()
 	return nil
 }
 
