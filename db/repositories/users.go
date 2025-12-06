@@ -10,6 +10,7 @@ type UsersRepository interface { // faciliates dependancy injection interface fo
 	GetById() (*models.User, error)
 	Create(username string, email string, hashedpassword string) (error)
 	GetAll() ([]*models.User, error)
+	GetByEmail(email string) (*models.User, error)
 	DeleteById(id int64) error
 }
 
@@ -77,6 +78,26 @@ func (u *UserRepositoryImp) GetById()  (*models.User, error) {
 
 func (u *UserRepositoryImp) GetAll() ([]*models.User, error) {
 	return nil, nil
+}
+
+func (u *UserRepositoryImp) GetByEmail(email string) (*models.User, error) {
+	query := "SELECT id, email, password FROM users WHERE email = ?"
+	row := u.db.QueryRow(query, email)
+	users := &models.User{}
+
+	err := row.Scan(&users.Id, &users.Email, &users.Password)
+	
+	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Println("No user found with the given email")
+			return nil, err
+		} else {
+			fmt.Println("Error scanning user by email:", err)
+			return nil, err
+		}
+	}
+
+	return users, nil
 }
 
 func (u *UserRepositoryImp) DeleteById(id int64) error {
