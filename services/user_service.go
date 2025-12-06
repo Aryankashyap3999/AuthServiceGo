@@ -1,17 +1,19 @@
 package services
 
 import (
+	env "AuthInGo/config/env"
 	db "AuthInGo/db/repositories"
+	"AuthInGo/dto"
 	"AuthInGo/utils"
 	"fmt"
-	env "AuthInGo/config/env"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserService interface {
 	GetUserById() error
 	CreateUser() error
-	LoginUser() (string, error)
+	LoginUser(payload *dto.LoginUserRequestDTO) (string, error)
 }
 
 type UserServiceImp struct {
@@ -46,9 +48,9 @@ func (u *UserServiceImp) CreateUser() error {
 	return nil
 }
 
-func (u *UserServiceImp) LoginUser() (string, error) {
-	email := "user3@example.com"
-	password := "plain_password"
+func (u *UserServiceImp) LoginUser(payload *dto.LoginUserRequestDTO) (string, error) {
+	email := payload.Email
+	password := payload.Password
 	user, err := u.userRepository.GetByEmail(email)
 
 	if err != nil {
@@ -68,12 +70,12 @@ func (u *UserServiceImp) LoginUser() (string, error) {
 		return "", nil
 	}
 
-	payload := jwt.MapClaims{
+	jwtPayload := jwt.MapClaims{
 		"email": email,
 		"password": password,
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtPayload)
 
 	tokenString, err := token.SignedString([]byte(env.GetString("JWT_SECRET", "default_secret")))
 
