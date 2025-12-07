@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -43,6 +44,7 @@ func WriteJsonErrorResponse(w http.ResponseWriter, statusCode  int, message stri
 }	
 
 func ReadJsonBody(r *http.Request, result any) error {
+	fmt.Println("Reading JSON body in utils", r.Body)
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	return decoder.Decode(result)

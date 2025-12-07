@@ -4,6 +4,7 @@ import (
 	env "AuthInGo/config/env"
 	db "AuthInGo/db/repositories"
 	"AuthInGo/dto"
+	"AuthInGo/models"
 	"AuthInGo/utils"
 	"fmt"
 
@@ -11,8 +12,8 @@ import (
 )
 
 type UserService interface {
-	GetUserById() error
-	CreateUser() error
+	GetUserById(id int64) (*models.User, error)
+	CreateUser(payload *dto.CreateUserRequestDTO) (*models.User, error)
 	LoginUser(payload *dto.LoginUserRequestDTO) (string, error)
 }
 
@@ -26,26 +27,39 @@ func NewUserService(_userRepository db.UsersRepository) UserService {
 	}
 }
 
-func (u *UserServiceImp) GetUserById() error {
+func (u *UserServiceImp) GetUserById(id int64) (*models.User, error) {
 	fmt.Println("Fetching user in service layer")
-	u.userRepository.GetById()
-	return nil
+	user, err := u.userRepository.GetById()
+	if err != nil {
+		fmt.Println("Error fetching user in service layer:", err)						
+		return nil, err
+	}
+
+	fmt.Println("User fetched in service layer:", user)
+	return user, nil
 }
 
-func (u *UserServiceImp) CreateUser() error {
+func (u *UserServiceImp) CreateUser(payload *dto.CreateUserRequestDTO) (*models.User, error) {
 	fmt.Println("Creating user in service layer")
-	password := "plain_password" // In real scenario, hash the password properly
-	hassedPassword, err := utils.HashPassword(password)
+
+	hashedpassword, err := utils.HashPassword(payload.Password)
 	if err != nil {
 		fmt.Println("Error hashing password in service layer:", err)
-		return err
+		return nil, err
 	}
-	u.userRepository.Create(
-		"username_example_3",
-		"user3@example.com",
-		hassedPassword,
+	user, err := u.userRepository.Create(
+		payload.Username,
+		payload.Email,
+		hashedpassword,
 	)
-	return nil
+
+	if err != nil {
+		fmt.Println("Error creating user in service layer:", err)
+		return nil, err
+	}
+
+	fmt.Println("User created in service layer:", user)
+	return user, nil
 }
 
 func (u *UserServiceImp) LoginUser(payload *dto.LoginUserRequestDTO) (string, error) {

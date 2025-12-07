@@ -10,7 +10,7 @@ import (
 
 type UserController struct {
 	UserService services.UserService
-}	
+}
 
 func NewUserController(userService services.UserService) *UserController {
 	return &UserController{
@@ -20,34 +20,43 @@ func NewUserController(userService services.UserService) *UserController {
 
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GetUserById called in controller")
-	uc.UserService.GetUserById()
+
 	w.Write([]byte("User fetched successfully"))
 }
 
 func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("GetUserById called in controller")
-	uc.UserService.CreateUser()
-	w.Write([]byte("User Created successfully"))
+
+	payload := r.Context().Value("create_payload").(dto.CreateUserRequestDTO)
+
+	fmt.Println("Payload received in controller:", payload)
+
+	user, err := uc.UserService.CreateUser(&payload)
+
+	if err != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Error creating user: ", err)
+		return
+	}
+
+	utils.WriteJsonSuccessResponse(w, http.StatusCreated, "User created successfully", user)
+	fmt.Println("User created in controller:", user)
 }
 
 func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("LoginUser called in controller")
 
-	var payload dto.LoginUserRequestDTO
+	payload := r.Context().Value("login_payload").(dto.LoginUserRequestDTO)
 
-	if jsonErr := utils.ReadJsonBody(r, &payload); jsonErr != nil {	
-		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid JSON payload: ", jsonErr)
-		return
-	}
+	fmt.Println("Payload in controller:", payload)
 
 	if validationErr := utils.Validator.Struct(payload); validationErr != nil {
+		fmt.Println("Validation error in controller:", validationErr)
 		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Validation error: ", validationErr)
 		return
 	}
 
 	jwtToken, err := uc.UserService.LoginUser(&payload)
 	if err != nil {
-		utils.WriteJsonErrorResponse(w, http.StatusUnauthorized, "Login failed: ", err)	
+		utils.WriteJsonErrorResponse(w, http.StatusUnauthorized, "Login failed: ", err)
 		return
 	}
 
