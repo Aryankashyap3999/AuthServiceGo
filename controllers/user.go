@@ -21,6 +21,34 @@ func NewUserController(userService services.UserService) *UserController {
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GetUserById called in controller")
 
+	userId := r.URL.Query().Get("id")
+
+	if userId == "" {	
+		userId = r.Context().Value("userId").(string)
+	}
+
+	fmt.Println("User ID from context or query:", userId)
+
+	if userId == "" {
+		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "User ID is required", nil)
+		return
+	}
+
+	fmt.Println("Fetching user with ID:", userId)
+	
+	user, err := uc.UserService.GetUserById(userId)
+	if err != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Error fetching user: ", err)
+		return
+	}
+
+	if user == nil {
+		utils.WriteJsonErrorResponse(w, http.StatusNotFound, "User not found", nil)
+		return
+	}
+
+	utils.WriteJsonSuccessResponse(w, http.StatusOK, "User fetched successfully", user)
+	fmt.Println("User fetched in controller:", user)
 	w.Write([]byte("User fetched successfully"))
 }
 

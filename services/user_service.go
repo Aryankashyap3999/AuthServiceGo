@@ -12,7 +12,7 @@ import (
 )
 
 type UserService interface {
-	GetUserById(id int64) (*models.User, error)
+	GetUserById(id string) (*models.User, error)
 	CreateUser(payload *dto.CreateUserRequestDTO) (*models.User, error)
 	LoginUser(payload *dto.LoginUserRequestDTO) (string, error)
 }
@@ -27,9 +27,9 @@ func NewUserService(_userRepository db.UsersRepository) UserService {
 	}
 }
 
-func (u *UserServiceImp) GetUserById(id int64) (*models.User, error) {
+func (u *UserServiceImp) GetUserById(id string) (*models.User, error) {
 	fmt.Println("Fetching user in service layer")
-	user, err := u.userRepository.GetById()
+	user, err := u.userRepository.GetById(id)
 	if err != nil {
 		fmt.Println("Error fetching user in service layer:", err)						
 		return nil, err
@@ -85,8 +85,8 @@ func (u *UserServiceImp) LoginUser(payload *dto.LoginUserRequestDTO) (string, er
 	}
 
 	jwtPayload := jwt.MapClaims{
-		"email": email,
-		"password": password,
+		"email": user.Email,
+		"id": user.Id,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtPayload)

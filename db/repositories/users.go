@@ -7,7 +7,7 @@ import (
 )
 
 type UsersRepository interface { // faciliates dependancy injection interface for repository
-	GetById() (*models.User, error)
+	GetById(id string) (*models.User, error)
 	Create(username string, email string, hashedpassword string) (*models.User, error)
 	GetAll() ([]*models.User, error)
 	GetByEmail(email string) (*models.User, error)
@@ -60,11 +60,11 @@ func (u *UserRepositoryImp) Create(username string, email string, hashedpassword
 	return user,nil
 }
 
-func (u *UserRepositoryImp) GetById()  (*models.User, error) {
+func (u *UserRepositoryImp) GetById(id string)  (*models.User, error) {
 	fmt.Println("Fetching user in repository layer")	
 
 	query := "SELECT id, username, email, created_at, updated_at FROM users WHERE id = ?"
-	row := u.db.QueryRow(query, 1)
+	row := u.db.QueryRow(query, id)
 
 	user := &models.User{}
 
