@@ -11,7 +11,7 @@ type Router interface {
 	Register(r chi.Router)
 }
 
-func SetupRoutes(UserRouter Router) *chi.Mux {
+func SetupRoutes(UserRouter Router, RoleRouter Router) *chi.Mux {
 	chiRouter := chi.NewRouter()
 
 	chiRouter.Use(middlewares.RequestLogger)
@@ -23,6 +23,7 @@ func SetupRoutes(UserRouter Router) *chi.Mux {
 	chiRouter.HandleFunc("/fakestoreservice/*", utils.ProxyToService("https://fakestoreapi.com/", "/fakestoreservice"))
 
 	UserRouter.Register(chiRouter)
+	RoleRouter.Register(chiRouter)
 
 	return chiRouter
 } 	

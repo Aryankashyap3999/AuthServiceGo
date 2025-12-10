@@ -19,7 +19,7 @@ func NewRoleController(roleService services.RoleService) *RoleController {
 }
 
 func (rc *RoleController) GetRoleById(w http.ResponseWriter, r *http.Request) {
-	roleId := r.URL.Query().Get("id")
+	roleId := r.PathValue("id")
 
 	if roleId == "" {
 		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Role ID is required", fmt.Errorf("role ID is missing"))
