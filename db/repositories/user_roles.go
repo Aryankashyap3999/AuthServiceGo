@@ -4,6 +4,7 @@ import (
 	"AuthInGo/models"
 	"database/sql"
 	"fmt"
+	"strings"
 )
 
 type UserRoleRepository interface {
@@ -14,6 +15,8 @@ type UserRoleRepository interface {
 	GetUserPermissions(userId int64) ([]*models.Permissions, error)
 	HasPermission(userId int64, resource string, action string) (bool, error)
 	HasRole(userId int64, roleName string) (bool, error)
+	HasAllRoles(userId int64, roleNames []string) (bool, error)
+	HasAnyRole(userId int64, roleNames []string) (bool, error)
 }
 
 type UserRoleRepositoryImpl struct {
@@ -170,3 +173,71 @@ func (urr *UserRoleRepositoryImpl) HasRole(userId int64, roleName string) (bool,
 
 	return count > 0, nil
 }
+
+func (urr *UserRoleRepositoryImpl) HasAllRoles(userId int64, roleNames []string) (bool, error) {
+
+	if len(roleNames) == 0 {	
+		return true, nil
+	}
+
+	query := `
+		SELECT COUNT(*) = ?
+		FROM user_roles ur
+		INNER JOIN roles r ON ur.role_id = r.id
+		WHERE ur.user_id = ? AND r.name IN (?)
+		GROUP BY ur.user_id
+		`
+
+	row := urr.db.QueryRow(query, len(roleNames), userId, strings.Join(roleNames, ","))
+
+	var hasAll bool
+	err := row.Scan(&hasAll)	
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check all roles: %w", err)
+	}
+
+	return hasAll, nil
+}	
+
+func (urr *UserRoleRepositoryImpl) HasAnyRole(userId int64, roleNames []string) (bool, error) {
+
+	if len(roleNames) == 0 {	
+		return false, nil
+	}
+
+	placeholders := strings.Repeat("?,", len(roleNames))
+	placeholders = placeholders[:len(placeholders)-1] // Remove trailing comma
+
+	query := fmt.Sprintf(` 
+		SELECT COUNT(*) > 0
+		FROM user_roles ur
+		INNER JOIN roles r ON ur.role_id = r.id
+		WHERE ur.user_id = ? AND r.name IN (%s)
+		`, placeholders)
+
+	// roleNameStr := utils.FormateRoles(roleNames)	
+
+	args := make([]interface{}, 0, 1 + len(roleNames))
+	args = append(args, userId)
+	for _, roleName := range roleNames {
+		args = append(args, roleName)
+	}	
+
+	row := urr.db.QueryRow(query, args...)
+
+	var hasAny bool
+	err := row.Scan(&hasAny)	
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check any roles: %w", err)
+	}
+
+	return hasAny, nil
+}	
+
+
